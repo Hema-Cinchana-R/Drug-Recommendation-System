@@ -1,0 +1,74 @@
+{% extends 'drug_app/base.html' %}
+{% block title %}Prediction History - Drug Recommendation System{% endblock %}
+{% block nav_history %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="fw-bold mb-1"><i class="fas fa-history me-2"></i>Prediction History</h2>
+    <p class="mb-0 opacity-75">Your past drug prediction records</p>
+</div>
+
+{% if history %}
+<div class="card p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead style="background:#1a3c5e;color:white;">
+                <tr>
+                    <th class="px-4 py-3">#</th>
+                    <th>Age</th>
+                    <th>Sex</th>
+                    <th>Blood Pressure</th>
+                    <th>Cholesterol</th>
+                    <th>Na/K Ratio</th>
+                    <th>Predicted Drug</th>
+                    <th>Best Model</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in history %}
+                <tr>
+                    <td class="px-4 text-muted">{{ forloop.counter }}</td>
+                    <td>{{ record.age }}</td>
+                    <td>
+                        {% if record.sex == 'M' %}
+                        <span class="badge bg-primary"><i class="fas fa-mars me-1"></i>Male</span>
+                        {% else %}
+                        <span class="badge" style="background:#e91e8c;"><i class="fas fa-venus me-1"></i>Female</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if record.blood_pressure == 'HIGH' %}bg-danger{% elif record.blood_pressure == 'LOW' %}bg-info{% else %}bg-success{% endif %}">
+                            {{ record.blood_pressure }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if record.cholesterol == 'HIGH' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                            {{ record.cholesterol }}
+                        </span>
+                    </td>
+                    <td>{{ record.na_to_k }}</td>
+                    <td><span class="badge bg-primary fs-6 px-3">{{ record.predicted_drug }}</span></td>
+                    <td><span class="badge bg-secondary">{{ record.best_model }}</span></td>
+                    <td class="text-muted small">{{ record.created_at|date:"d M Y, H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<p class="text-muted mt-2 small text-end">Total records: {{ history|length }}</p>
+
+{% else %}
+<div class="card p-5 text-center">
+    <div style="width:80px;height:80px;background:#f0f6ff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+        <i class="fas fa-history fa-2x" style="color:#00b4d8;"></i>
+    </div>
+    <h5 class="fw-bold" style="color:#1a3c5e;">No History Yet</h5>
+    <p class="text-muted">You haven't made any predictions yet.</p>
+    <a href="{% url 'predict' %}" class="btn btn-primary">
+        <i class="fas fa-search me-2"></i>Make Your First Prediction
+    </a>
+</div>
+{% endif %}
+{% endblock %}

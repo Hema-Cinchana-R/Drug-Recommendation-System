@@ -1,0 +1,126 @@
+{% extends 'drug_app/base.html' %}
+{% block title %}Model Accuracy - Drug Recommendation System{% endblock %}
+{% block nav_accuracy %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+    .acc-bar-bg { background: #e8f4ff; border-radius: 50px; height: 12px; overflow: hidden; }
+    .acc-bar-fill { height: 100%; border-radius: 50px; background: linear-gradient(90deg, #00b4d8, #1a3c5e); transition: width 1s ease; }
+    .model-card { border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1rem; border-left: 4px solid #00b4d8; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .model-card.best { border-left-color: #06d6a0; background: #f0fff8; }
+    .stat-card { background: linear-gradient(135deg, #1a3c5e, #2c6496); color: white; border-radius: 14px; padding: 1.5rem; text-align: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="fw-bold mb-1"><i class="fas fa-chart-bar me-2"></i>Model Accuracy Comparison</h2>
+    <p class="mb-0 opacity-75">Performance of all 6 classification algorithms on the drug dataset</p>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <div class="fs-1 fw-bold">6</div>
+            <div class="opacity-75">ML Algorithms</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#06d6a0,#059669);">
+            <div class="fs-1 fw-bold">100%</div>
+            <div class="opacity-75">Best Accuracy</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+            <div class="fs-1 fw-bold">200</div>
+            <div class="opacity-75">Dataset Records</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);">
+            <div class="fs-1 fw-bold">5</div>
+            <div class="opacity-75">Input Features</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7 mb-4">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-4" style="color:#1a3c5e;">Algorithm Performance</h5>
+            {% for name, acc in model_accuracies.items %}
+            <div class="model-card {% if name == best_model %}best{% endif %}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        {% if name == best_model %}
+                        <i class="fas fa-trophy text-warning me-1"></i>
+                        {% endif %}
+                        <strong>{{ name }}</strong>
+                        {% if name == best_model %}
+                        <span class="badge ms-2" style="background:#06d6a0;">🏆 Best</span>
+                        {% endif %}
+                    </div>
+                    <span class="fw-bold fs-5" style="color:#1a3c5e;">{{ acc }}%</span>
+                </div>
+                <div class="acc-bar-bg">
+                    <div class="acc-bar-fill {% if name == best_model %}{% endif %}" style="width: {{ acc }}%; {% if name == best_model %}background:linear-gradient(90deg,#06d6a0,#059669);{% endif %}"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-lg-5 mb-4">
+        <div class="card p-4 mb-3">
+            <h5 class="fw-bold mb-3" style="color:#1a3c5e;">Accuracy Chart</h5>
+            <canvas id="accuracyChart" height="250"></canvas>
+        </div>
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3" style="color:#1a3c5e;"><i class="fas fa-info-circle me-2"></i>Dataset Info</h5>
+            <table class="table table-sm">
+                <tr><td class="text-muted">Total Records</td><td class="fw-semibold">200</td></tr>
+                <tr><td class="text-muted">Training Split</td><td class="fw-semibold">80% (160 records)</td></tr>
+                <tr><td class="text-muted">Testing Split</td><td class="fw-semibold">20% (40 records)</td></tr>
+                <tr><td class="text-muted">Output Classes</td><td class="fw-semibold">DrugA, DrugB, DrugC, DrugX, DrugY</td></tr>
+                <tr><td class="text-muted">Features Used</td><td class="fw-semibold">Age, Sex, BP, Cholesterol, Na_to_K</td></tr>
+                <tr><td class="text-muted">Best Model</td><td><span class="badge bg-success">{{ best_model }}</span></td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const ctx = document.getElementById('accuracyChart').getContext('2d');
+    const labels = [{% for name, acc in model_accuracies.items %}'{{ name }}',{% endfor %}];
+    const data = [{% for name, acc in model_accuracies.items %}{{ acc }},{% endfor %}];
+    const colors = data.map(v => v === Math.max(...data) ? '#06d6a0' : '#00b4d8');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Accuracy (%)',
+                data: data,
+                backgroundColor: colors,
+                borderRadius: 8,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y + '%' } }
+            },
+            scales: {
+                y: { min: 0, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f0f0f0' } },
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+</script>
+{% endblock %}
